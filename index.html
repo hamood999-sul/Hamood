@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>سعرات حمود الحرارية</title>
+
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#000000">
+
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
+  <style>
+    body{
+      margin:0;
+      font-family: Arial, sans-serif;
+      background:#0f0f0f;
+      color:white;
+      text-align:center;
+      padding:20px;
+    }
+    h1{
+      color:#00ff88;
+    }
+    #reader{
+      width:300px;
+      margin:auto;
+    }
+    input{
+      padding:10px;
+      margin-top:15px;
+      width:200px;
+      border-radius:10px;
+      border:none;
+      text-align:center;
+      font-size:16px;
+    }
+    button{
+      padding:10px 20px;
+      margin-top:15px;
+      background:#00ff88;
+      border:none;
+      border-radius:10px;
+      font-weight:bold;
+      cursor:pointer;
+    }
+    #result{
+      font-size:22px;
+      margin-top:20px;
+      color:#00ff88;
+    }
+  </style>
+</head>
+<body>
+
+<h1>💪 سعرات حمود الحرارية</h1>
+
+<div id="reader"></div>
+
+<h3 id="product"></h3>
+<p id="calInfo"></p>
+
+<input type="number" id="grams" placeholder="ادخل الكمية بالجرام">
+<br>
+<button onclick="calculate()">احسب السعرات</button>
+
+<div id="result"></div>
+
+<script>
+let caloriesPer100 = 0;
+
+function onScanSuccess(decodedText) {
+  fetch(`https://world.openfoodfacts.org/api/v0/product/${decodedText}.json`)
+  .then(res => res.json())
+  .then(data => {
+    if(data.status === 1){
+      document.getElementById("product").innerText = data.product.product_name || "منتج بدون اسم";
+      caloriesPer100 = data.product.nutriments["energy-kcal_100g"] || 0;
+      document.getElementById("calInfo").innerText = "السعرات لكل 100غ: " + caloriesPer100 + " kcal";
+    } else {
+      alert("المنتج غير موجود في قاعدة البيانات");
+    }
+  });
+}
+
+new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 })
+.render(onScanSuccess);
+
+function calculate(){
+  const grams = document.getElementById("grams").value;
+  if(!grams || caloriesPer100 === 0){
+    alert("تأكد من مسح المنتج وادخال الكمية");
+    return;
+  }
+  const total = (grams * caloriesPer100) / 100;
+  document.getElementById("result").innerText = total.toFixed(1) + " kcal 🔥";
+}
+
+// تسجيل Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+
+</body>
+</html>
